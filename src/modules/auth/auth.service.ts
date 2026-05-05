@@ -1,24 +1,30 @@
-import { eq, and, gt } from "drizzle-orm";
-import { v4 as uuidv4 } from "uuid";
-import { db } from "../../db";
+import { and, eq, gt } from 'drizzle-orm';
+import { db } from '../../db';
 import {
-  users,
   oauthAccounts,
   refreshTokens,
+  users,
   verificationTokens,
   type User,
-} from "../../db/schema";
-import { hashPassword, comparePassword, validatePasswordStrength } from "../../utils/password";
-import { buildTokenPair, verifyRefreshToken } from "../../utils/jwt";
-import { generateSecureToken, hashToken } from "../../utils/crypto";
-import { sendVerificationEmail, sendPasswordResetEmail } from "../../utils/email";
-import { AppError } from "../../utils/errors";
+} from '../../db/schema';
 import {
   type AuthResponse,
-  type PublicUser,
   type OAuthProfile,
+  type PublicUser,
   type TokenPair,
-} from "../../types";
+} from '../../types';
+import { generateSecureToken, hashToken } from '../../utils/crypto';
+import {
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+} from '../../utils/email';
+import { AppError } from '../../utils/errors';
+import { buildTokenPair, verifyRefreshToken } from '../../utils/jwt';
+import {
+  comparePassword,
+  hashPassword,
+  validatePasswordStrength,
+} from '../../utils/password';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -44,11 +50,12 @@ async function createSession(
   meta: SessionMeta,
   family?: string
 ): Promise<TokenPair> {
-  const { tokenPair, jti, expiresAt, family: tokenFamily } = buildTokenPair(
-    userId,
-    email,
-    family
-  );
+  const {
+    tokenPair,
+    jti,
+    expiresAt,
+    family: tokenFamily,
+  } = buildTokenPair(userId, email, family);
 
   // Store hashed refresh token
   await db.insert(refreshTokens).values({
@@ -81,7 +88,7 @@ export async function register(
   // Check password strength
   const { valid, errors } = validatePasswordStrength(password);
   if (!valid) {
-    throw AppError.badRequest("Password does not meet requirements", errors);
+    throw AppError.badRequest('Password does not meet requirements', errors);
   }
 
   // Check duplicate email
@@ -89,7 +96,7 @@ export async function register(
     where: eq(users.email, email),
   });
   if (existing) {
-    throw AppError.conflict("An account with this email already exists");
+    throw AppError.conflict('An account with this email already exists');
   }
 
   const passwordHash = await hashPassword(password);
@@ -120,7 +127,7 @@ export async function login(
 
   // Always compare to prevent timing attacks even if user not found
   const dummyHash =
-    "$2a$12$invalidhashinvalidhashinvalidhashinvalidhashinvalidhash";
+    '$2a$12$invalidhashinvalidhashinvalidhashinvalidhashinvalidhash';
   const isValid = await comparePassword(
     password,
     user?.passwordHash ?? dummyHash
@@ -163,9 +170,11 @@ export async function refreshAccessToken(
         .update(refreshTokens)
         .set({ isRevoked: true })
         .where(eq(refreshTokens.family, payload.family));
-      throw AppError.invalidToken("Token reuse detected — all sessions revoked");
+      throw AppError.invalidToken(
+        'Token reuse detected — all sessions revoked'
+      );
     }
-    throw AppError.invalidToken("Refresh token not found");
+    throw AppError.invalidToken('Refresh token not found');
   }
 
   if (storedToken.isRevoked) {
@@ -174,11 +183,11 @@ export async function refreshAccessToken(
       .update(refreshTokens)
       .set({ isRevoked: true })
       .where(eq(refreshTokens.family, storedToken.family));
-    throw AppError.invalidToken("Token reuse detected — all sessions revoked");
+    throw AppError.invalidToken('Token reuse detected — all sessions revoked');
   }
 
   if (storedToken.expiresAt < new Date()) {
-    throw new AppError("TOKEN_EXPIRED", "Refresh token has expired", 401);
+    throw new AppError('TOKEN_EXPIRED', 'Refresh token has expired', 401);
   }
 
   if (!storedToken.user.isActive) throw AppError.accountDisabled();
@@ -229,7 +238,7 @@ async function issueEmailVerification(
   await db.insert(verificationTokens).values({
     userId,
     tokenHash,
-    type: "email_verification",
+    type: 'email_verification',
     expiresAt,
   });
 
@@ -242,17 +251,17 @@ export async function verifyEmail(rawToken: string): Promise<void> {
   const record = await db.query.verificationTokens.findFirst({
     where: and(
       eq(verificationTokens.tokenHash, tokenHash),
-      eq(verificationTokens.type, "email_verification")
+      eq(verificationTokens.type, 'email_verification')
     ),
     with: { user: true },
   });
 
   if (!record || record.usedAt) {
-    throw AppError.invalidToken("Invalid or already used verification link");
+    throw AppError.invalidToken('Invalid or already used verification link');
   }
 
   if (record.expiresAt < new Date()) {
-    throw new AppError("TOKEN_EXPIRED", "Verification link has expired", 401);
+    throw new AppError('TOKEN_EXPIRED', 'Verification link has expired', 401);
   }
 
   await db.transaction(async (tx) => {
@@ -270,8 +279,9 @@ export async function verifyEmail(rawToken: string): Promise<void> {
 
 export async function resendVerificationEmail(userId: string): Promise<void> {
   const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
-  if (!user) throw AppError.notFound("User not found");
-  if (user.emailVerified) throw AppError.badRequest("Email is already verified");
+  if (!user) throw AppError.notFound('User not found');
+  if (user.emailVerified)
+    throw AppError.badRequest('Email is already verified');
 
   await issueEmailVerification(user.id, user.email, user.name);
 }
@@ -279,7 +289,9 @@ export async function resendVerificationEmail(userId: string): Promise<void> {
 // ── Password Reset ────────────────────────────────────────────────────────────
 
 export async function forgotPassword(email: string): Promise<void> {
-  const user = await db.query.users.findFirst({ where: eq(users.email, email) });
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
 
   // Always succeed (don't leak whether email exists)
   if (!user || !user.passwordHash) return;
@@ -291,7 +303,7 @@ export async function forgotPassword(email: string): Promise<void> {
   await db.insert(verificationTokens).values({
     userId: user.id,
     tokenHash,
-    type: "password_reset",
+    type: 'password_reset',
     expiresAt,
   });
 
@@ -303,23 +315,24 @@ export async function resetPassword(
   newPassword: string
 ): Promise<void> {
   const { valid, errors } = validatePasswordStrength(newPassword);
-  if (!valid) throw AppError.badRequest("Password does not meet requirements", errors);
+  if (!valid)
+    throw AppError.badRequest('Password does not meet requirements', errors);
 
   const tokenHash = hashToken(rawToken);
 
   const record = await db.query.verificationTokens.findFirst({
     where: and(
       eq(verificationTokens.tokenHash, tokenHash),
-      eq(verificationTokens.type, "password_reset")
+      eq(verificationTokens.type, 'password_reset')
     ),
   });
 
   if (!record || record.usedAt) {
-    throw AppError.invalidToken("Invalid or already used reset link");
+    throw AppError.invalidToken('Invalid or already used reset link');
   }
 
   if (record.expiresAt < new Date()) {
-    throw new AppError("TOKEN_EXPIRED", "Reset link has expired", 401);
+    throw new AppError('TOKEN_EXPIRED', 'Reset link has expired', 401);
   }
 
   const passwordHash = await hashPassword(newPassword);
@@ -349,13 +362,15 @@ export async function changePassword(
   newPassword: string
 ): Promise<void> {
   const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
-  if (!user || !user.passwordHash) throw AppError.badRequest("No password set on account");
+  if (!user || !user.passwordHash)
+    throw AppError.badRequest('No password set on account');
 
   const isValid = await comparePassword(currentPassword, user.passwordHash);
   if (!isValid) throw AppError.invalidCredentials();
 
   const { valid, errors } = validatePasswordStrength(newPassword);
-  if (!valid) throw AppError.badRequest("Password does not meet requirements", errors);
+  if (!valid)
+    throw AppError.badRequest('Password does not meet requirements', errors);
 
   const passwordHash = await hashPassword(newPassword);
 
@@ -477,7 +492,7 @@ export async function revokeSession(
     ),
   });
 
-  if (!session) throw AppError.notFound("Session not found");
+  if (!session) throw AppError.notFound('Session not found');
 
   await db
     .update(refreshTokens)

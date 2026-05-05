@@ -1,13 +1,13 @@
-import { Router, Response, NextFunction, Request } from "express";
-import { eq } from "drizzle-orm";
-import { z } from "zod";
-import { db } from "../../db";
-import { users } from "../../db/schema";
-import { authenticate } from "../../middleware/authenticate";
-import { validate } from "../../middleware/validate";
-import { success } from "../../utils/response";
-import { AppError } from "../../utils/errors";
-import { AuthenticatedRequest } from "../../types";
+import { eq } from 'drizzle-orm';
+import { NextFunction, Request, Response, Router } from 'express';
+import { z } from 'zod';
+import { db } from '../../db';
+import { users } from '../../db/schema';
+import { authenticate } from '../../middleware/authenticate';
+import { validate } from '../../middleware/validate';
+import { AuthenticatedRequest } from '../../types';
+import { AppError } from '../../utils/errors';
+import { success } from '../../utils/response';
 
 const router = Router();
 
@@ -22,7 +22,7 @@ const updateProfileSchema = z.object({
 });
 
 // GET /api/users/me
-router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
+router.get('/me', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthenticatedRequest;
     const user = await db.query.users.findFirst({
@@ -44,7 +44,7 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
       },
     });
 
-    if (!user) throw AppError.notFound("User not found");
+    if (!user) throw AppError.notFound('User not found');
 
     success(res, { user });
   } catch (err) {
@@ -54,7 +54,7 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
 
 // PATCH /api/users/me
 router.patch(
-  "/me",
+  '/me',
   validate(updateProfileSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -86,14 +86,20 @@ router.patch(
 );
 
 // DELETE /api/users/me
-router.delete("/me", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const authReq = req as AuthenticatedRequest;
-    await db.update(users).set({ isActive: false }).where(eq(users.id, authReq.user.id));
-    res.status(204).send();
-  } catch (err) {
-    next(err);
+router.delete(
+  '/me',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      await db
+        .update(users)
+        .set({ isActive: false })
+        .where(eq(users.id, authReq.user.id));
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 export default router;

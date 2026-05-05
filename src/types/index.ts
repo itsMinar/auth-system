@@ -1,27 +1,27 @@
-import { Request } from "express";
-import { User } from "../db/schema";
+import { Request } from 'express';
+import { User } from '../db/schema';
 
 // ── Authenticated Request ─────────────────────────────────────────────────────
 
 export interface AuthenticatedRequest extends Request {
-  user: Pick<User, "id" | "email" | "name" | "emailVerified">;
+  user: Pick<User, 'id' | 'email' | 'name' | 'emailVerified'>;
 }
 
 // ── JWT Payloads ──────────────────────────────────────────────────────────────
 
 export interface AccessTokenPayload {
-  sub: string;      // userId
+  sub: string; // userId
   email: string;
-  type: "access";
+  type: 'access';
   iat?: number;
   exp?: number;
 }
 
 export interface RefreshTokenPayload {
-  sub: string;      // userId
-  jti: string;      // token id (uuid)
-  family: string;   // rotation family
-  type: "refresh";
+  sub: string; // userId
+  jti: string; // token id (uuid)
+  family: string; // rotation family
+  type: 'refresh';
   iat?: number;
   exp?: number;
 }
@@ -52,7 +52,7 @@ export interface PublicUser {
 
 // ── OAuth ─────────────────────────────────────────────────────────────────────
 
-export type OAuthProvider = "google" | "github";
+export type OAuthProvider = 'google' | 'github';
 
 export interface OAuthProfile {
   provider: OAuthProvider;

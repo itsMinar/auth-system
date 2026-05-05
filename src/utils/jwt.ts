@@ -1,8 +1,8 @@
-import jwt from "jsonwebtoken";
-import { v4 as uuidv4 } from "uuid";
-import { env } from "../config/env";
-import { AccessTokenPayload, RefreshTokenPayload, TokenPair } from "../types";
-import { AppError } from "./errors";
+import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
+import { env } from '../config/env';
+import { AccessTokenPayload, RefreshTokenPayload, TokenPair } from '../types';
+import { AppError } from './errors';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -29,12 +29,12 @@ export function signAccessToken(
   const payload: AccessTokenPayload = {
     sub: userId,
     email,
-    type: "access",
+    type: 'access',
   };
 
   const token = jwt.sign(payload, env.JWT_ACCESS_SECRET, {
     expiresIn,
-    algorithm: "HS256",
+    algorithm: 'HS256',
   });
 
   return { token, expiresIn };
@@ -43,18 +43,18 @@ export function signAccessToken(
 export function verifyAccessToken(token: string): AccessTokenPayload {
   try {
     const payload = jwt.verify(token, env.JWT_ACCESS_SECRET, {
-      algorithms: ["HS256"],
+      algorithms: ['HS256'],
     }) as AccessTokenPayload;
 
-    if (payload.type !== "access") {
-      throw AppError.invalidToken("Wrong token type");
+    if (payload.type !== 'access') {
+      throw AppError.invalidToken('Wrong token type');
     }
 
     return payload;
   } catch (err) {
     if (err instanceof AppError) throw err;
     if (err instanceof jwt.TokenExpiredError) {
-      throw new AppError("TOKEN_EXPIRED", "Access token has expired", 401);
+      throw new AppError('TOKEN_EXPIRED', 'Access token has expired', 401);
     }
     throw AppError.invalidToken();
   }
@@ -74,12 +74,12 @@ export function signRefreshToken(
     sub: userId,
     jti,
     family,
-    type: "refresh",
+    type: 'refresh',
   };
 
   const token = jwt.sign(payload, env.JWT_REFRESH_SECRET, {
     expiresIn,
-    algorithm: "HS256",
+    algorithm: 'HS256',
   });
 
   return { token, jti, expiresAt };
@@ -88,20 +88,20 @@ export function signRefreshToken(
 export function verifyRefreshToken(token: string): RefreshTokenPayload {
   try {
     const payload = jwt.verify(token, env.JWT_REFRESH_SECRET, {
-      algorithms: ["HS256"],
+      algorithms: ['HS256'],
     }) as RefreshTokenPayload;
 
-    if (payload.type !== "refresh") {
-      throw AppError.invalidToken("Wrong token type");
+    if (payload.type !== 'refresh') {
+      throw AppError.invalidToken('Wrong token type');
     }
 
     return payload;
   } catch (err) {
     if (err instanceof AppError) throw err;
     if (err instanceof jwt.TokenExpiredError) {
-      throw new AppError("TOKEN_EXPIRED", "Refresh token has expired", 401);
+      throw new AppError('TOKEN_EXPIRED', 'Refresh token has expired', 401);
     }
-    throw AppError.invalidToken("Invalid refresh token");
+    throw AppError.invalidToken('Invalid refresh token');
   }
 }
 

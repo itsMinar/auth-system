@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Lockfiles (managed by package managers)
+package-lock.json
+bun.lock
+yarn.lock
+pnpm-lock.yaml
+
+# Drizzle migrations (should be handled by drizzle-kit)
+drizzle/
+
+# Environment variables
+.env
+*.env
+
+# Others
+.vscode/
+.idea/
+.DS_Store
+README.md

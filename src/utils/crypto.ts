@@ -1,18 +1,18 @@
-import crypto from "crypto";
+import crypto from 'crypto';
 
 /**
  * Generate a cryptographically secure random token (URL-safe base64).
  * Used for email verification and password reset.
  */
 export function generateSecureToken(bytes = 32): string {
-  return crypto.randomBytes(bytes).toString("base64url");
+  return crypto.randomBytes(bytes).toString('base64url');
 }
 
 /**
  * Hash a token for storage in DB (so raw tokens are never stored).
  */
 export function hashToken(token: string): string {
-  return crypto.createHash("sha256").update(token).digest("hex");
+  return crypto.createHash('sha256').update(token).digest('hex');
 }
 
 /**

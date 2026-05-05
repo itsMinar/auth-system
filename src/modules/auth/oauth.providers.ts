@@ -1,6 +1,6 @@
-import { env } from "../../config/env";
-import { AppError } from "../../utils/errors";
-import { OAuthProfile, OAuthProvider } from "../../types";
+import { env } from '../../config/env';
+import { OAuthProfile } from '../../types';
+import { AppError } from '../../utils/errors';
 
 // ── State Store (in-memory for simplicity; use Redis in production) ───────────
 
@@ -24,23 +24,23 @@ export function validateOAuthState(state: string): boolean {
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
 
-const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
-const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
+const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo';
 
 export function getGoogleAuthUrl(state: string): string {
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CALLBACK_URL) {
-    throw new AppError("OAUTH_ERROR", "Google OAuth is not configured", 500);
+    throw new AppError('OAUTH_ERROR', 'Google OAuth is not configured', 500);
   }
 
   const params = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
     redirect_uri: env.GOOGLE_CALLBACK_URL,
-    response_type: "code",
-    scope: "openid email profile",
+    response_type: 'code',
+    scope: 'openid email profile',
     state,
-    access_type: "offline",
-    prompt: "select_account",
+    access_type: 'offline',
+    prompt: 'select_account',
   });
 
   return `${GOOGLE_AUTH_URL}?${params.toString()}`;
@@ -52,27 +52,27 @@ export async function exchangeGoogleCode(code: string): Promise<OAuthProfile> {
     !env.GOOGLE_CLIENT_SECRET ||
     !env.GOOGLE_CALLBACK_URL
   ) {
-    throw new AppError("OAUTH_ERROR", "Google OAuth is not configured", 500);
+    throw new AppError('OAUTH_ERROR', 'Google OAuth is not configured', 500);
   }
 
   // Exchange code for tokens
   const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       code,
       client_id: env.GOOGLE_CLIENT_ID,
       client_secret: env.GOOGLE_CLIENT_SECRET,
       redirect_uri: env.GOOGLE_CALLBACK_URL,
-      grant_type: "authorization_code",
+      grant_type: 'authorization_code',
     }),
   });
 
   if (!tokenRes.ok) {
-    throw new AppError("OAUTH_ERROR", "Failed to exchange Google code", 400);
+    throw new AppError('OAUTH_ERROR', 'Failed to exchange Google code', 400);
   }
 
-  const tokenData = await tokenRes.json() as Record<string, any>;
+  const tokenData = (await tokenRes.json()) as Record<string, any>;
 
   // Get user info
   const userRes = await fetch(GOOGLE_USERINFO_URL, {
@@ -80,20 +80,20 @@ export async function exchangeGoogleCode(code: string): Promise<OAuthProfile> {
   });
 
   if (!userRes.ok) {
-    throw new AppError("OAUTH_ERROR", "Failed to fetch Google user info", 400);
+    throw new AppError('OAUTH_ERROR', 'Failed to fetch Google user info', 400);
   }
 
-  const googleUser = await userRes.json() as Record<string, any>;
+  const googleUser = (await userRes.json()) as Record<string, any>;
 
   if (!googleUser.email) {
-    throw new AppError("OAUTH_ERROR", "Google account has no email", 400);
+    throw new AppError('OAUTH_ERROR', 'Google account has no email', 400);
   }
 
   return {
-    provider: "google",
+    provider: 'google',
     providerAccountId: googleUser.sub,
     email: googleUser.email,
-    name: googleUser.name ?? googleUser.email.split("@")[0],
+    name: googleUser.name ?? googleUser.email.split('@')[0],
     avatarUrl: googleUser.picture,
     accessToken: tokenData.access_token,
     refreshToken: tokenData.refresh_token,
@@ -105,20 +105,20 @@ export async function exchangeGoogleCode(code: string): Promise<OAuthProfile> {
 
 // ── GitHub OAuth ──────────────────────────────────────────────────────────────
 
-const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
-const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
-const GITHUB_USER_URL = "https://api.github.com/user";
-const GITHUB_EMAILS_URL = "https://api.github.com/user/emails";
+const GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize';
+const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token';
+const GITHUB_USER_URL = 'https://api.github.com/user';
+const GITHUB_EMAILS_URL = 'https://api.github.com/user/emails';
 
 export function getGitHubAuthUrl(state: string): string {
   if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CALLBACK_URL) {
-    throw new AppError("OAUTH_ERROR", "GitHub OAuth is not configured", 500);
+    throw new AppError('OAUTH_ERROR', 'GitHub OAuth is not configured', 500);
   }
 
   const params = new URLSearchParams({
     client_id: env.GITHUB_CLIENT_ID,
     redirect_uri: env.GITHUB_CALLBACK_URL,
-    scope: "read:user user:email",
+    scope: 'read:user user:email',
     state,
   });
 
@@ -127,15 +127,15 @@ export function getGitHubAuthUrl(state: string): string {
 
 export async function exchangeGitHubCode(code: string): Promise<OAuthProfile> {
   if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
-    throw new AppError("OAUTH_ERROR", "GitHub OAuth is not configured", 500);
+    throw new AppError('OAUTH_ERROR', 'GitHub OAuth is not configured', 500);
   }
 
   // Exchange code for tokens
   const tokenRes = await fetch(GITHUB_TOKEN_URL, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Accept: "application/json",
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
     },
     body: new URLSearchParams({
       code,
@@ -145,13 +145,17 @@ export async function exchangeGitHubCode(code: string): Promise<OAuthProfile> {
   });
 
   if (!tokenRes.ok) {
-    throw new AppError("OAUTH_ERROR", "Failed to exchange GitHub code", 400);
+    throw new AppError('OAUTH_ERROR', 'Failed to exchange GitHub code', 400);
   }
 
-  const tokenData = await tokenRes.json() as Record<string, any>;
+  const tokenData = (await tokenRes.json()) as Record<string, any>;
 
   if (tokenData.error) {
-    throw new AppError("OAUTH_ERROR", tokenData.error_description ?? "OAuth error", 400);
+    throw new AppError(
+      'OAUTH_ERROR',
+      tokenData.error_description ?? 'OAuth error',
+      400
+    );
   }
 
   // Get user profile
@@ -159,44 +163,48 @@ export async function exchangeGitHubCode(code: string): Promise<OAuthProfile> {
     fetch(GITHUB_USER_URL, {
       headers: {
         Authorization: `Bearer ${tokenData.access_token}`,
-        Accept: "application/vnd.github+json",
+        Accept: 'application/vnd.github+json',
       },
     }),
     fetch(GITHUB_EMAILS_URL, {
       headers: {
         Authorization: `Bearer ${tokenData.access_token}`,
-        Accept: "application/vnd.github+json",
+        Accept: 'application/vnd.github+json',
       },
     }),
   ]);
 
   if (!userRes.ok) {
-    throw new AppError("OAUTH_ERROR", "Failed to fetch GitHub user info", 400);
+    throw new AppError('OAUTH_ERROR', 'Failed to fetch GitHub user info', 400);
   }
 
-  const githubUser = await userRes.json() as Record<string, any>;
+  const githubUser = (await userRes.json()) as Record<string, any>;
   let email = githubUser.email as string | null;
 
   // GitHub may not return email publicly; fetch from emails endpoint
   if (!email && emailsRes.ok) {
-    const emails = await emailsRes.json() as Array<{ email: string; primary: boolean; verified: boolean }>;
+    const emails = (await emailsRes.json()) as Array<{
+      email: string;
+      primary: boolean;
+      verified: boolean;
+    }>;
     const primary = emails.find((e) => e.primary && e.verified);
     email = primary?.email ?? emails[0]?.email ?? null;
   }
 
   if (!email) {
     throw new AppError(
-      "OAUTH_ERROR",
-      "No verified email found on GitHub account. Please add a public email.",
+      'OAUTH_ERROR',
+      'No verified email found on GitHub account. Please add a public email.',
       400
     );
   }
 
   return {
-    provider: "github",
+    provider: 'github',
     providerAccountId: String(githubUser.id),
     email,
-    name: githubUser.name ?? githubUser.login ?? email.split("@")[0],
+    name: githubUser.name ?? githubUser.login ?? email.split('@')[0],
     avatarUrl: githubUser.avatar_url,
     accessToken: tokenData.access_token,
   };

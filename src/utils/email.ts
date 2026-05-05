@@ -1,6 +1,6 @@
-import nodemailer, { Transporter } from "nodemailer";
-import { env } from "../config/env";
-import { AppError } from "../utils/errors";
+import nodemailer, { Transporter } from 'nodemailer';
+import { env } from '../config/env';
+import { AppError } from '../utils/errors';
 
 // ── Transporter ───────────────────────────────────────────────────────────────
 
@@ -11,7 +11,7 @@ function getTransporter(): Transporter {
 
   if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
     // In dev, use Ethereal (or just log)
-    console.warn("⚠️  SMTP not configured — emails will be logged to console");
+    console.warn('⚠️  SMTP not configured — emails will be logged to console');
     return nodemailer.createTransport({ jsonTransport: true });
   }
 
@@ -80,11 +80,11 @@ async function sendEmail(options: SendEmailOptions): Promise<void> {
 
     // In dev with jsonTransport, log the message
     if ((info as any).message) {
-      console.log("📧  Email (dev mode):", JSON.parse((info as any).message));
+      console.log('📧  Email (dev mode):', JSON.parse((info as any).message));
     }
   } catch (err) {
-    console.error("Email send error:", err);
-    throw new AppError("EMAIL_SEND_FAILED", "Failed to send email", 500);
+    console.error('Email send error:', err);
+    throw new AppError('EMAIL_SEND_FAILED', 'Failed to send email', 500);
   }
 }
 
@@ -99,9 +99,9 @@ export async function sendVerificationEmail(
 
   await sendEmail({
     to,
-    subject: "Verify your email address",
+    subject: 'Verify your email address',
     html: baseTemplate(
-      "Verify your email",
+      'Verify your email',
       `
       <p>Hi ${name},</p>
       <p>Thanks for signing up. Please verify your email address to get started.</p>
@@ -122,9 +122,9 @@ export async function sendPasswordResetEmail(
 
   await sendEmail({
     to,
-    subject: "Reset your password",
+    subject: 'Reset your password',
     html: baseTemplate(
-      "Reset your password",
+      'Reset your password',
       `
       <p>Hi ${name},</p>
       <p>We received a request to reset the password for your account.</p>

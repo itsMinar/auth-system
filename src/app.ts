@@ -1,51 +1,55 @@
-import express from "express";
-import helmet from "helmet";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import { env } from "./config/env";
-import authRouter from "./modules/auth/auth.router";
-import usersRouter from "./modules/users/users.router";
-import { apiLimiter, authLimiter, refreshLimiter } from "./middleware/rateLimiter";
-import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express from 'express';
+import helmet from 'helmet';
+import { env } from './config/env';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import {
+  apiLimiter,
+  authLimiter,
+  refreshLimiter,
+} from './middleware/rateLimiter';
+import authRouter from './modules/auth/auth.router';
+import usersRouter from './modules/users/users.router';
 
 export function createApp() {
   const app = express();
 
   // ── Security Headers ─────────────────────────────────────────────────────────
   app.use(helmet());
-  app.set("trust proxy", 1);
+  app.set('trust proxy', 1);
 
   // ── CORS ─────────────────────────────────────────────────────────────────────
   app.use(
     cors({
       origin: env.CLIENT_URL,
       credentials: true,
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
     })
   );
 
   // ── Body Parsing ──────────────────────────────────────────────────────────────
-  app.use(express.json({ limit: "10kb" }));
-  app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+  app.use(express.json({ limit: '10kb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10kb' }));
   app.use(cookieParser());
 
   // ── Health Check ──────────────────────────────────────────────────────────────
-  app.get("/health", (_req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  app.get('/health', (_req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
   // ── API Rate Limiting ─────────────────────────────────────────────────────────
-  app.use("/api", apiLimiter);
-  app.use("/api/auth/login", authLimiter);
-  app.use("/api/auth/register", authLimiter);
-  app.use("/api/auth/forgot-password", authLimiter);
-  app.use("/api/auth/reset-password", authLimiter);
-  app.use("/api/auth/refresh", refreshLimiter);
+  app.use('/api', apiLimiter);
+  app.use('/api/auth/login', authLimiter);
+  app.use('/api/auth/register', authLimiter);
+  app.use('/api/auth/forgot-password', authLimiter);
+  app.use('/api/auth/reset-password', authLimiter);
+  app.use('/api/auth/refresh', refreshLimiter);
 
   // ── Routes ────────────────────────────────────────────────────────────────────
-  app.use("/api/auth", authRouter);
-  app.use("/api/users", usersRouter);
+  app.use('/api/auth', authRouter);
+  app.use('/api/users', usersRouter);
 
   // ── 404 & Error Handling ──────────────────────────────────────────────────────
   app.use(notFoundHandler);

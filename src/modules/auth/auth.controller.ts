@@ -1,26 +1,30 @@
-import { Request, Response, NextFunction } from "express";
-import * as authService from "./auth.service";
+import { NextFunction, Request, Response } from 'express';
+import { env } from '../../config/env';
+import { AuthenticatedRequest } from '../../types';
+import { AppError } from '../../utils/errors';
+import { created, noContent, success } from '../../utils/response';
+import * as authService from './auth.service';
 import {
-  getGoogleAuthUrl,
-  getGitHubAuthUrl,
-  exchangeGoogleCode,
   exchangeGitHubCode,
+  exchangeGoogleCode,
   generateOAuthState,
+  getGitHubAuthUrl,
+  getGoogleAuthUrl,
   validateOAuthState,
-} from "./oauth.providers";
-import { AppError } from "../../utils/errors";
-import { success, created, noContent, errorResponse } from "../../utils/response";
-import { AuthenticatedRequest } from "../../types";
-import { env } from "../../config/env";
+} from './oauth.providers';
+
+// ── Helper Function to Extract Meta Information ──────────────
 
 function getSessionMeta(req: Request) {
   return {
-    userAgent: req.headers["user-agent"],
+    userAgent: req.headers['user-agent'],
     ipAddress:
-      (Array.isArray(req.headers["x-forwarded-for"])
-        ? req.headers["x-forwarded-for"][0]
-        : req.headers["x-forwarded-for"])?.split(",")[0].trim() ??
-      req.socket.remoteAddress,
+      (Array.isArray(req.headers['x-forwarded-for'])
+        ? req.headers['x-forwarded-for'][0]
+        : req.headers['x-forwarded-for']
+      )
+        ?.split(',')[0]
+        .trim() ?? req.socket.remoteAddress,
   };
 }
 
@@ -33,8 +37,17 @@ export async function register(
 ): Promise<void> {
   try {
     const { email, password, name } = req.body;
-    const result = await authService.register(email, password, name, getSessionMeta(req));
-    created(res, result, "Account created. Please check your email to verify your account.");
+    const result = await authService.register(
+      email,
+      password,
+      name,
+      getSessionMeta(req)
+    );
+    created(
+      res,
+      result,
+      'Account created. Please check your email to verify your account.'
+    );
   } catch (err) {
     next(err);
   }
@@ -49,7 +62,11 @@ export async function login(
 ): Promise<void> {
   try {
     const { email, password } = req.body;
-    const result = await authService.login(email, password, getSessionMeta(req));
+    const result = await authService.login(
+      email,
+      password,
+      getSessionMeta(req)
+    );
     success(res, result);
   } catch (err) {
     next(err);
@@ -65,7 +82,10 @@ export async function refreshToken(
 ): Promise<void> {
   try {
     const { refreshToken: token } = req.body;
-    const tokens = await authService.refreshAccessToken(token, getSessionMeta(req));
+    const tokens = await authService.refreshAccessToken(
+      token,
+      getSessionMeta(req)
+    );
     success(res, { tokens });
   } catch (err) {
     next(err);
@@ -111,7 +131,7 @@ export async function verifyEmail(
   try {
     const { token } = req.query as { token: string };
     await authService.verifyEmail(token);
-    success(res, null, { message: "Email verified successfully" });
+    success(res, null, { message: 'Email verified successfully' });
   } catch (err) {
     next(err);
   }
@@ -124,7 +144,7 @@ export async function resendVerification(
 ): Promise<void> {
   try {
     await authService.resendVerificationEmail(req.user.id);
-    success(res, null, { message: "Verification email sent" });
+    success(res, null, { message: 'Verification email sent' });
   } catch (err) {
     next(err);
   }
@@ -142,7 +162,7 @@ export async function forgotPassword(
     await authService.forgotPassword(email);
     // Always return same response (don't leak email existence)
     success(res, null, {
-      message: "If that email exists, a reset link has been sent",
+      message: 'If that email exists, a reset link has been sent',
     });
   } catch (err) {
     next(err);
@@ -157,7 +177,7 @@ export async function resetPassword(
   try {
     const { token, password } = req.body;
     await authService.resetPassword(token, password);
-    success(res, null, { message: "Password reset successfully" });
+    success(res, null, { message: 'Password reset successfully' });
   } catch (err) {
     next(err);
   }
@@ -171,7 +191,7 @@ export async function changePassword(
   try {
     const { currentPassword, newPassword } = req.body;
     await authService.changePassword(req.user.id, currentPassword, newPassword);
-    success(res, null, { message: "Password changed successfully" });
+    success(res, null, { message: 'Password changed successfully' });
   } catch (err) {
     next(err);
   }
@@ -198,7 +218,7 @@ export async function revokeSession(
   next: NextFunction
 ): Promise<void> {
   try {
-    const sessionId = req.params["sessionId"] as string;
+    const sessionId = req.params['sessionId'] as string;
     await authService.revokeSession(req.user.id, sessionId);
     noContent(res);
   } catch (err) {
@@ -208,7 +228,11 @@ export async function revokeSession(
 
 // ── OAuth: Google ─────────────────────────────────────────────────────────────
 
-export function googleRedirect(req: Request, res: Response, next: NextFunction): void {
+export function googleRedirect(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
   try {
     const state = generateOAuthState();
     res.redirect(getGoogleAuthUrl(state));
@@ -226,17 +250,22 @@ export async function googleCallback(
     const { code, state, error } = req.query as Record<string, string>;
 
     if (error) {
-      return res.redirect(`${env.CLIENT_URL}/auth/error?error=${encodeURIComponent(error)}`) as any;
+      return res.redirect(
+        `${env.CLIENT_URL}/auth/error?error=${encodeURIComponent(error)}`
+      ) as any;
     }
 
     if (!state || !validateOAuthState(state)) {
-      throw AppError.badRequest("Invalid OAuth state");
+      throw AppError.badRequest('Invalid OAuth state');
     }
 
-    if (!code) throw AppError.badRequest("Authorization code missing");
+    if (!code) throw AppError.badRequest('Authorization code missing');
 
     const profile = await exchangeGoogleCode(code);
-    const result = await authService.handleOAuthLogin(profile, getSessionMeta(req));
+    const result = await authService.handleOAuthLogin(
+      profile,
+      getSessionMeta(req)
+    );
 
     // Redirect to client with tokens in query params (or use a short-lived code)
     const params = new URLSearchParams({
@@ -251,7 +280,11 @@ export async function googleCallback(
 
 // ── OAuth: GitHub ─────────────────────────────────────────────────────────────
 
-export function githubRedirect(req: Request, res: Response, next: NextFunction): void {
+export function githubRedirect(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
   try {
     const state = generateOAuthState();
     res.redirect(getGitHubAuthUrl(state));
@@ -269,17 +302,22 @@ export async function githubCallback(
     const { code, state, error } = req.query as Record<string, string>;
 
     if (error) {
-      return res.redirect(`${env.CLIENT_URL}/auth/error?error=${encodeURIComponent(error)}`) as any;
+      return res.redirect(
+        `${env.CLIENT_URL}/auth/error?error=${encodeURIComponent(error)}`
+      ) as any;
     }
 
     if (!state || !validateOAuthState(state)) {
-      throw AppError.badRequest("Invalid OAuth state");
+      throw AppError.badRequest('Invalid OAuth state');
     }
 
-    if (!code) throw AppError.badRequest("Authorization code missing");
+    if (!code) throw AppError.badRequest('Authorization code missing');
 
     const profile = await exchangeGitHubCode(code);
-    const result = await authService.handleOAuthLogin(profile, getSessionMeta(req));
+    const result = await authService.handleOAuthLogin(
+      profile,
+      getSessionMeta(req)
+    );
 
     const params = new URLSearchParams({
       accessToken: result.tokens.accessToken,

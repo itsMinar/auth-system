@@ -1,10 +1,10 @@
-import { Request, Response, NextFunction } from "express";
-import { verifyAccessToken } from "../utils/jwt";
-import { AppError } from "../utils/errors";
-import { AuthenticatedRequest } from "../types";
-import { db } from "../db";
-import { users } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
+import { NextFunction, Request, Response } from 'express';
+import { db } from '../db';
+import { users } from '../db/schema';
+import { AuthenticatedRequest } from '../types';
+import { AppError } from '../utils/errors';
+import { verifyAccessToken } from '../utils/jwt';
 
 export async function authenticate(
   req: Request,
@@ -14,8 +14,8 @@ export async function authenticate(
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader?.startsWith("Bearer ")) {
-      throw AppError.unauthorized("Authorization header missing or malformed");
+    if (!authHeader?.startsWith('Bearer ')) {
+      throw AppError.unauthorized('Authorization header missing or malformed');
     }
 
     const token = authHeader.slice(7);
@@ -33,7 +33,7 @@ export async function authenticate(
       },
     });
 
-    if (!user) throw AppError.unauthorized("User no longer exists");
+    if (!user) throw AppError.unauthorized('User no longer exists');
     if (!user.isActive) throw AppError.accountDisabled();
 
     (req as AuthenticatedRequest).user = {

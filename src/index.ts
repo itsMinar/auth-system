@@ -1,6 +1,6 @@
-import {createApp} from './app';
-import {env} from './config/env';
-import {checkDatabaseConnection} from './db';
+import { createApp } from './app';
+import { env } from './config/env';
+import { checkDatabaseConnection } from './db';
 
 async function bootstrap() {
   // Validate DB connection before accepting traffic
@@ -24,7 +24,7 @@ async function bootstrap() {
     // Force exit after 10s
     setTimeout(() => {
       console.error(
-        'Could not close connections in time, forcefully shutting down',
+        'Could not close connections in time, forcefully shutting down'
       );
       process.exit(1);
     }, 10_000);

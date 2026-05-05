@@ -1,14 +1,14 @@
-import rateLimit from "express-rate-limit";
-import { env } from "../config/env";
-import { errorResponse } from "../utils/response";
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
+import { env } from '../config/env';
+import { errorResponse } from '../utils/response';
 
 function rateLimitHandler(req: Request, res: Response) {
   errorResponse(
     res,
     429,
-    "RATE_LIMITED",
-    "Too many requests, please try again later"
+    'RATE_LIMITED',
+    'Too many requests, please try again later'
   );
 }
 
@@ -35,12 +35,15 @@ export const authLimiter = rateLimit({
   // Use IP + email for login attempts to prevent targeted attacks
   keyGenerator: (req) => {
     const ip =
-      (Array.isArray(req.headers["x-forwarded-for"])
-        ? req.headers["x-forwarded-for"][0]
-        : req.headers["x-forwarded-for"])?.split(",")[0].trim() ??
+      (Array.isArray(req.headers['x-forwarded-for'])
+        ? req.headers['x-forwarded-for'][0]
+        : req.headers['x-forwarded-for']
+      )
+        ?.split(',')[0]
+        .trim() ??
       req.socket.remoteAddress ??
-      "unknown";
-    const email = req.body?.email ?? "";
+      'unknown';
+    const email = req.body?.email ?? '';
     return `${ip}:${email}`;
   },
 });
