@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { env } from '../config/env';
+import logger from '../utils/logger';
 import * as schema from './schema';
 
 const pool = new Pool({
@@ -12,7 +13,7 @@ const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-  console.error('Unexpected database pool error:', err);
+  logger.error('Unexpected database pool error:', err);
 });
 
 export const db = drizzle(pool, { schema });
@@ -21,7 +22,7 @@ export async function checkDatabaseConnection(): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query('SELECT 1');
-    console.log('✅  Database connected');
+    logger.info('✅  Database connected');
   } finally {
     client.release();
   }

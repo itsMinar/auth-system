@@ -1,6 +1,7 @@
 import { createApp } from './app';
 import { env } from './config/env';
 import { checkDatabaseConnection } from './db';
+import logger from './utils/logger';
 
 async function bootstrap() {
   // Validate DB connection before accepting traffic
@@ -9,21 +10,21 @@ async function bootstrap() {
   const app = createApp();
 
   const server = app.listen(env.PORT, () => {
-    console.log(`🚀  Server running on http://localhost:${env.PORT}`);
-    console.log(`   Environment: ${env.NODE_ENV}`);
+    logger.info(`🚀  Server running on http://localhost:${env.PORT}`);
+    logger.info(`   Environment: ${env.NODE_ENV}`);
   });
 
   // ── Graceful Shutdown ──────────────────────────────────────────────────────
   const shutdown = (signal: string) => {
-    console.log(`\n${signal} received — shutting down gracefully`);
+    logger.info(`${signal} received — shutting down gracefully`);
     server.close(() => {
-      console.log('HTTP server closed');
+      logger.info('HTTP server closed');
       process.exit(0);
     });
 
     // Force exit after 10s
     setTimeout(() => {
-      console.error(
+      logger.error(
         'Could not close connections in time, forcefully shutting down'
       );
       process.exit(1);
@@ -34,17 +35,17 @@ async function bootstrap() {
   process.on('SIGINT', () => shutdown('SIGINT'));
 
   process.on('unhandledRejection', (reason) => {
-    console.error('Unhandled Rejection:', reason);
+    logger.error('Unhandled Rejection:', reason);
     process.exit(1);
   });
 
   process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
+    logger.error('Uncaught Exception:', err);
     process.exit(1);
   });
 }
 
 bootstrap().catch((err) => {
-  console.error('Failed to start server:', err);
+  logger.error('Failed to start server:', err);
   process.exit(1);
 });

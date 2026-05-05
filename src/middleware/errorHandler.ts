@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { env } from '../config/env';
 import { AppError } from '../utils/errors';
+import logger from '../utils/logger';
 import { errorResponse } from '../utils/response';
 
 export function errorHandler(
@@ -17,7 +18,7 @@ export function errorHandler(
   }
 
   // Log unexpected errors
-  console.error('Unhandled error:', {
+  logger.error('Unhandled error:', {
     message: err.message,
     stack: err.stack,
     path: req.path,

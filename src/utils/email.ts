@@ -1,6 +1,7 @@
 import nodemailer, { Transporter } from 'nodemailer';
 import { env } from '../config/env';
 import { AppError } from '../utils/errors';
+import logger from '../utils/logger';
 
 // ── Transporter ───────────────────────────────────────────────────────────────
 
@@ -11,7 +12,7 @@ function getTransporter(): Transporter {
 
   if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
     // In dev, use Ethereal (or just log)
-    console.warn('⚠️  SMTP not configured — emails will be logged to console');
+    logger.warn('⚠️  SMTP not configured — emails will be logged to console');
     return nodemailer.createTransport({ jsonTransport: true });
   }
 
@@ -80,10 +81,10 @@ async function sendEmail(options: SendEmailOptions): Promise<void> {
 
     // In dev with jsonTransport, log the message
     if ((info as any).message) {
-      console.log('📧  Email (dev mode):', JSON.parse((info as any).message));
+      logger.info('📧  Email (dev mode):', JSON.parse((info as any).message));
     }
   } catch (err) {
-    console.error('Email send error:', err);
+    logger.error('Email send error:', err);
     throw new AppError('EMAIL_SEND_FAILED', 'Failed to send email', 500);
   }
 }

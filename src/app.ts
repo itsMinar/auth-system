@@ -11,6 +11,7 @@ import {
 } from './middleware/rateLimiter';
 import authRouter from './modules/auth/auth.router';
 import usersRouter from './modules/users/users.router';
+import logger from './utils/logger';
 
 export function createApp() {
   const app = express();
@@ -33,6 +34,14 @@ export function createApp() {
   app.use(express.json({ limit: '10kb' }));
   app.use(express.urlencoded({ extended: true, limit: '10kb' }));
   app.use(cookieParser());
+
+  // ── Request logging middleware ───────────────────────────────────────────────
+  app.use((req, _res, next) => {
+    logger.info(
+      `${req.method} - ${req.url} - ${req.ip} - ${req.get('user-agent')}`
+    );
+    next();
+  });
 
   // ── Health Check ──────────────────────────────────────────────────────────────
   app.get('/health', (_req, res) => {
