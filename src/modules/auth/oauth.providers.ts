@@ -1,26 +1,7 @@
-import { env } from '../../config/env';
-import { OAuthProfile } from '../../types';
-import { AppError } from '../../utils/errors';
-
-// ── State Store (in-memory for simplicity; use Redis in production) ───────────
-
-const stateStore = new Map<string, { createdAt: number }>();
-const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-export function generateOAuthState(): string {
-  const state =
-    Math.random().toString(36).substring(2) +
-    Math.random().toString(36).substring(2);
-  stateStore.set(state, { createdAt: Date.now() });
-  return state;
-}
-
-export function validateOAuthState(state: string): boolean {
-  const entry = stateStore.get(state);
-  if (!entry) return false;
-  stateStore.delete(state);
-  return Date.now() - entry.createdAt < STATE_TTL_MS;
-}
+import { env } from '@/config/env';
+import { OAuthProfile } from '@/types';
+import { AppError } from '@/utils/errors';
+export { generateOAuthState, validateOAuthState } from './oauth.store';
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
 
