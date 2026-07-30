@@ -1,8 +1,29 @@
 {
   "name": "auth-system",
   "version": "1.0.0",
-  "description": "Production-ready authentication system with Express, Drizzle ORM, JWT, and OAuth",
   "main": "dist/index.js",
+  "description": "Production-ready authentication API with Express, Drizzle ORM, JWT, and OAuth",
+  "keywords": [
+    "authentication",
+    "express",
+    "typescript",
+    "drizzle-orm",
+    "jwt",
+    "oauth",
+    "email-verification",
+    "password-reset",
+    "session-management",
+    "security"
+  ],
+  "author": {
+    "name": "Md. Minar Munshi",
+    "email": "minarmunshi46@gmail.com",
+    "url": "https://www.linkedin.com/in/itsMinar"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itsMinar/auth-system.git"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
