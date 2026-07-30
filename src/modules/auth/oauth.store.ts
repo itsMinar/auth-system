@@ -1,4 +1,4 @@
-import type { AuthResponse } from '@/types';
+import type { AuthResponse } from '../../types';
 import crypto from 'crypto';
 
 interface StateEntry {

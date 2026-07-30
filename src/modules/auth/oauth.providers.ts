@@ -1,6 +1,6 @@
-import { env } from '@/config/env';
-import { OAuthProfile } from '@/types';
-import { AppError } from '@/utils/errors';
+import { env } from '../../config/env';
+import { OAuthProfile } from '../../types';
+import { AppError } from '../../utils/errors';
 export { generateOAuthState, validateOAuthState } from './oauth.store';
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
